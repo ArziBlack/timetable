@@ -1,5 +1,6 @@
 // GridControls.tsx
 import React from "react";
+import { Download } from "lucide-react";
 
 interface GridControlsProps {
   selectedCellsCount: number;
@@ -15,6 +16,7 @@ interface GridControlsProps {
   onSaveDefaultDurationEdit: () => void;
   onCancelDefaultDurationEdit: () => void;
   onDefaultDurationKeyDown: (e: React.KeyboardEvent) => void;
+  onExportData: () => void;
 }
 
 export const GridControls: React.FC<GridControlsProps> = ({
@@ -31,6 +33,7 @@ export const GridControls: React.FC<GridControlsProps> = ({
   onSaveDefaultDurationEdit,
   onCancelDefaultDurationEdit,
   onDefaultDurationKeyDown,
+  onExportData,
 }) => {
   return (
     <div className="mb-6">
@@ -39,7 +42,7 @@ export const GridControls: React.FC<GridControlsProps> = ({
       </h1>
       <p className="text-gray-600 mb-4">
         Click cells to select them (blue highlight), then merge selected
-        rectangular regions.
+        rectangular regions. Double-click cells to edit text content.
       </p>
 
       <div className="flex gap-4 mb-4 flex-wrap items-center">
@@ -63,6 +66,14 @@ export const GridControls: React.FC<GridControlsProps> = ({
           className="px-6 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition-all duration-200 shadow-md"
         >
           Reset Grid
+        </button>
+
+        <button
+          onClick={onExportData}
+          className="px-6 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium transition-all duration-200 shadow-md flex items-center gap-2"
+        >
+          <Download className="w-4 h-4" />
+          Export Data
         </button>
 
         <div className="flex items-center gap-2 bg-gray-100 px-3 py-2 rounded-lg">
@@ -115,6 +126,7 @@ export const GridControls: React.FC<GridControlsProps> = ({
         Current columns: {columnCount} | Default slot duration:{" "}
         {defaultSlotDuration} minutes
       </div>
+
       <div className="relative">
         {selectedCellsCount > 0 && !canMerge && (
           <p className="text-amber-600 text-sm absolute -top-5 left-0">

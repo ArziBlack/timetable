@@ -314,6 +314,10 @@ export const useGridState = (): GridState & GridActions => {
     setCellContents(newCellContents);
   };
 
+  const setAllCellContents = (newCellContents: Map<string, CellContent>) => {
+    setCellContents(newCellContents);
+  };
+
   return {
     // State
     selectedCells,
@@ -355,5 +359,6 @@ export const useGridState = (): GridState & GridActions => {
     setTempCellText,
     toggleCellVertical,
     setCellAlignment,
+    setAllCellContents,
   };
 };

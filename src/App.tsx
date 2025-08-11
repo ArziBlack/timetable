@@ -1,12 +1,26 @@
-import React from "react";
+import React, { useState } from "react";
 import { useGridState } from "./hooks/usegrid";
 import { GridControls } from "./components/gridcontrols";
 import { GridHeader } from "./components/gridheader";
 import { GridCell } from "./components/gridcell";
 import { generateTimeLabels, canMergeCells } from "./lib/util";
+import {
+  extractTimetableData,
+  logTimetableData,
+  generateAutomatedTimetable,
+  defaultBlockedTexts,
+} from "./lib/timetable";
+import type { TimetableDatabase } from "./interfaces/database";
+import { DatabaseManager } from "./components/DatabaseManager";
 
 const App = () => {
   const gridState = useGridState();
+  const [database, setDatabase] = useState<TimetableDatabase>({
+    teachers: [],
+    subjects: [],
+    blockedSlots: [],
+    blockedTexts: defaultBlockedTexts,
+  });
   const {
     selectedCells,
     mergedCells,
@@ -43,6 +57,118 @@ const App = () => {
     cancelCellEdit,
   } = gridState;
 
+  const loadSampleData = () => {
+    const sampleDatabase: TimetableDatabase = {
+      teachers: [
+        {
+          id: 'teacher-math',
+          name: 'Ms. Johnson',
+          subjects: ['Mathematics', 'Statistics'],
+          maxPeriodsPerDay: 4,
+          unavailableSlots: ['0-0'] // Not available Monday first period
+        },
+        {
+          id: 'teacher-english',
+          name: 'Mr. Smith',
+          subjects: ['English', 'Literature'],
+          maxPeriodsPerDay: 3,
+          unavailableSlots: []
+        },
+        {
+          id: 'teacher-science',
+          name: 'Dr. Brown',
+          subjects: ['Physics', 'Chemistry', 'Biology'],
+          maxPeriodsPerDay: 4,
+          unavailableSlots: []
+        },
+        {
+          id: 'teacher-history',
+          name: 'Ms. Davis',
+          subjects: ['History', 'Geography'],
+          maxPeriodsPerDay: 3,
+          unavailableSlots: []
+        },
+        {
+          id: 'teacher-pe',
+          name: 'Coach Wilson',
+          subjects: ['Physical Education', 'Health'],
+          maxPeriodsPerDay: 2,
+          unavailableSlots: []
+        }
+      ],
+      subjects: [
+        {
+          id: 'math',
+          name: 'Mathematics',
+          teacherId: 'teacher-math',
+          periodsPerWeek: 5,
+          priority: 'high',
+          avoidConsecutive: false
+        },
+        {
+          id: 'english',
+          name: 'English',
+          teacherId: 'teacher-english',
+          periodsPerWeek: 4,
+          priority: 'high',
+          avoidConsecutive: false
+        },
+        {
+          id: 'physics',
+          name: 'Physics',
+          teacherId: 'teacher-science',
+          periodsPerWeek: 3,
+          priority: 'medium',
+          avoidConsecutive: true
+        },
+        {
+          id: 'chemistry',
+          name: 'Chemistry',
+          teacherId: 'teacher-science',
+          periodsPerWeek: 3,
+          priority: 'medium',
+          avoidConsecutive: true
+        },
+        {
+          id: 'biology',
+          name: 'Biology',
+          teacherId: 'teacher-science',
+          periodsPerWeek: 2,
+          priority: 'medium',
+          avoidConsecutive: false
+        },
+        {
+          id: 'history',
+          name: 'History',
+          teacherId: 'teacher-history',
+          periodsPerWeek: 3,
+          priority: 'medium',
+          avoidConsecutive: false
+        },
+        {
+          id: 'geography',
+          name: 'Geography',
+          teacherId: 'teacher-history',
+          periodsPerWeek: 2,
+          priority: 'low',
+          avoidConsecutive: false
+        },
+        {
+          id: 'pe',
+          name: 'Physical Education',
+          teacherId: 'teacher-pe',
+          periodsPerWeek: 2,
+          priority: 'low',
+          avoidConsecutive: true
+        }
+      ],
+      blockedSlots: [],
+      blockedTexts: defaultBlockedTexts
+    };
+    
+    setDatabase(sampleDatabase);
+  };
+
   const gridSize = 5;
   const dayLabels = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
   const timeLabels = generateTimeLabels(
@@ -64,6 +190,54 @@ const App = () => {
   const startEditingDefaultDuration = () => {
     gridState.setEditingDefaultDuration(true);
     gridState.setTempDefaultDuration(defaultSlotDuration.toString());
+  };
+
+  const handleExportData = () => {
+    const timetableData = extractTimetableData(
+      cellContents,
+      mergedCells,
+      hiddenCells,
+      columnCount,
+      columnDurations,
+      defaultSlotDuration
+    );
+
+    logTimetableData(timetableData);
+
+    // Also copy to clipboard as JSON
+    navigator.clipboard
+      .writeText(JSON.stringify(timetableData, null, 2))
+      .then(() => {
+        alert("Timetable data copied to clipboard and logged to console!");
+      })
+      .catch(() => {
+        alert("Timetable data logged to console (clipboard copy failed)");
+      });
+  };
+
+  // Generate automated timetable
+  const handleGenerateAutomatedTimetable = () => {
+    if (database.subjects.length === 0) {
+      alert("Please add subjects to the database first.");
+      return;
+    }
+
+    const newCellContents = generateAutomatedTimetable(
+      database,
+      columnCount,
+      cellContents,
+      hiddenCells
+    );
+
+    // Update the grid state with new cell contents
+    gridState.setAllCellContents(newCellContents);
+
+    alert(
+      `Timetable generated! Added ${database.subjects.reduce(
+        (sum, s) => sum + s.periodsPerWeek,
+        0
+      )} periods across ${database.subjects.length} subjects.`
+    );
   };
 
   const renderCell = (row: number, col: number) => {
@@ -123,6 +297,13 @@ const App = () => {
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
+      <DatabaseManager
+        database={database}
+        onDatabaseUpdate={setDatabase}
+        onGenerateTimetable={handleGenerateAutomatedTimetable}
+        onLoadSampleData={loadSampleData}
+      />
+
       <GridControls
         selectedCellsCount={selectedCells.size}
         canMerge={canMergeCells(selectedCells)}
@@ -132,6 +313,7 @@ const App = () => {
         columnCount={columnCount}
         onMergeCells={mergeCells}
         onResetGrid={resetGrid}
+        onExportData={handleExportData}
         onStartEditingDefaultDuration={startEditingDefaultDuration}
         onTempDefaultDurationChange={gridState.setTempDefaultDuration}
         onSaveDefaultDurationEdit={saveDefaultDurationEdit}
