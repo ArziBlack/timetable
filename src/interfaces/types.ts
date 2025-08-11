@@ -10,6 +10,17 @@ export interface MergeInfo {
     duration: number;
   }
   
+  export interface CellContent {
+    text: string;
+    isVertical: boolean;
+    alignment: 'left' | 'center' | 'right';
+  }
+  
+  export interface CellPosition {
+    row: number;
+    col: number;
+  }
+  
   export interface GridState {
     selectedCells: Set<string>;
     mergedCells: Map<string, MergeInfo>;
@@ -23,10 +34,14 @@ export interface MergeInfo {
     editingDefaultDuration: boolean;
     tempDefaultDuration: string;
     columnDurations: { [key: number]: number };
+    cellContents: Map<string, CellContent>;
+    editingCell: string | null;
+    tempCellText: string;
   }
   
   export interface GridActions {
     handleCellClick: (row: number, col: number) => void;
+    handleCellDoubleClick: (row: number, col: number) => void;
     mergeCells: () => void;
     addColumnAfter: (afterColumnIndex: number) => void;
     deleteColumn: (columnIndex: number) => void;
@@ -41,4 +56,10 @@ export interface MergeInfo {
     setTempDuration: (duration: string) => void;
     setTempDefaultDuration: (duration: string) => void;
     setEditingDefaultDuration: (editing: boolean) => void;
+    startEditingCell: (cellKey: string) => void;
+    saveCellEdit: () => void;
+    cancelCellEdit: () => void;
+    setTempCellText: (text: string) => void;
+    toggleCellVertical: (cellKey: string) => void;
+    setCellAlignment: (cellKey: string, alignment: 'left' | 'center' | 'right') => void;
   }

@@ -1,11 +1,11 @@
 // GridHeader.tsx
-import React from 'react';
-import { MoreVertical } from 'lucide-react';
+import React from "react";
+import { MoreVertical } from "lucide-react";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover';
+} from "@/components/ui/popover";
 
 interface GridHeaderProps {
   time: string;
@@ -45,9 +45,9 @@ export const GridHeader: React.FC<GridHeaderProps> = ({
   onDeleteColumn,
 }) => {
   return (
-    <th 
+    <th
       className={`bg-gray-300 border-2 border-gray-400 h-12 w-16 font-semibold text-gray-700 text-center sticky top-0 z-10 text-sm whitespace-nowrap relative group cursor-pointer transition-all duration-200 ${
-        hoveredColumn === index ? 'bg-gray-400' : ''
+        hoveredColumn === index ? "bg-gray-400" : ""
       }`}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
@@ -60,7 +60,7 @@ export const GridHeader: React.FC<GridHeaderProps> = ({
             onChange={(e) => onTempDurationChange(e.target.value)}
             onKeyDown={onKeyDown}
             onBlur={onBlur}
-            className="w-full text-xs text-center border rounded px-1 py-0.5"
+            className="w-full min-w-[50px] text-xs text-center border rounded px-1 py-0.5"
             autoFocus
             placeholder="minutes"
             min="5"
@@ -69,17 +69,28 @@ export const GridHeader: React.FC<GridHeaderProps> = ({
         </div>
       ) : (
         <div className="flex items-center justify-center h-full px-1">
-          <div className="text-xs leading-tight">{time}</div>
+          <div className="text-xs text-left leading-tight pl-3">
+            {time.includes("-") ? (
+              <>
+                <span>{time.split("-")[0]}-</span>
+                <wbr />
+                <span>{time.split("-")[1]}</span>
+              </>
+            ) : (
+              <span>{time}</span>
+            )}
+          </div>
         </div>
       )}
-      
+
       {hoveredColumn === index && editingDuration === null && (
         <div className="absolute -top-1 right-1 z-[100]">
-          <Popover open={openPopover === index} onOpenChange={onOpenPopoverChange}>
+          <Popover
+            open={openPopover === index}
+            onOpenChange={onOpenPopoverChange}
+          >
             <PopoverTrigger asChild>
-              <button 
-                className="bg-white border border-gray-300 rounded p-1 shadow-lg hover:bg-gray-50 outline-none"
-              >
+              <button className="bg-white border border-gray-300 rounded p-1 shadow-lg hover:bg-gray-50 outline-none">
                 <MoreVertical size={12} />
               </button>
             </PopoverTrigger>
@@ -101,9 +112,9 @@ export const GridHeader: React.FC<GridHeaderProps> = ({
                   onClick={onDeleteColumn}
                   disabled={columnCount <= 1}
                   className={`px-3 py-2 text-left text-sm rounded flex items-center gap-2 ${
-                    columnCount > 1 
-                      ? 'hover:bg-red-50 text-red-600' 
-                      : 'text-gray-400 cursor-not-allowed'
+                    columnCount > 1
+                      ? "hover:bg-red-50 text-red-600"
+                      : "text-gray-400 cursor-not-allowed"
                   }`}
                 >
                   <span>🗑️</span> Delete Column

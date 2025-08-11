@@ -1,6 +1,6 @@
 // useGridState.ts
 import { useState } from 'react';
-import type { GridState, GridActions, MergeInfo } from '../interfaces/types';
+import type { GridState, GridActions, MergeInfo, CellContent } from '../interfaces/types';
 import { getCellKey, canMergeCells } from '../lib/util';
 
 export const useGridState = (): GridState & GridActions => {
@@ -16,11 +16,17 @@ export const useGridState = (): GridState & GridActions => {
   const [editingDefaultDuration, setEditingDefaultDuration] = useState(false);
   const [tempDefaultDuration, setTempDefaultDuration] = useState('45');
   const [columnDurations, setColumnDurations] = useState<{ [key: number]: number }>({});
+  const [cellContents, setCellContents] = useState<Map<string, CellContent>>(new Map());
+  const [editingCell, setEditingCell] = useState<string | null>(null);
+  const [tempCellText, setTempCellText] = useState('');
 
   const handleCellClick = (row: number, col: number) => {
     const cellKey = getCellKey(row, col);
     
     if (hiddenCells.has(cellKey)) return;
+    
+    // If we're editing a cell, don't change selection
+    if (editingCell) return;
     
     const newSelected = new Set(selectedCells);
     if (newSelected.has(cellKey)) {
@@ -29,6 +35,13 @@ export const useGridState = (): GridState & GridActions => {
       newSelected.add(cellKey);
     }
     setSelectedCells(newSelected);
+  };
+
+  const handleCellDoubleClick = (row: number, col: number) => {
+    const cellKey = getCellKey(row, col);
+    if (hiddenCells.has(cellKey)) return;
+    
+    startEditingCell(cellKey);
   };
 
   const mergeCells = () => {
@@ -236,6 +249,69 @@ export const useGridState = (): GridState & GridActions => {
     setEditingDuration(null);
     setTempDuration('');
     setOpenPopover(null);
+    setCellContents(new Map());
+    setEditingCell(null);
+    setTempCellText('');
+  };
+
+  const startEditingCell = (cellKey: string) => {
+    const currentContent = cellContents.get(cellKey);
+    setEditingCell(cellKey);
+    setTempCellText(currentContent?.text || '');
+    setSelectedCells(new Set()); // Clear selections when editing
+  };
+
+  const saveCellEdit = () => {
+    if (editingCell) {
+      const currentContent = cellContents.get(editingCell);
+      const newContent: CellContent = {
+        text: tempCellText,
+        isVertical: currentContent?.isVertical || false,
+        alignment: currentContent?.alignment || 'center'
+      };
+      
+      const newCellContents = new Map(cellContents);
+      if (tempCellText.trim()) {
+        newCellContents.set(editingCell, newContent);
+      } else {
+        newCellContents.delete(editingCell);
+      }
+      
+      setCellContents(newCellContents);
+    }
+    setEditingCell(null);
+    setTempCellText('');
+  };
+
+  const cancelCellEdit = () => {
+    setEditingCell(null);
+    setTempCellText('');
+  };
+
+  const toggleCellVertical = (cellKey: string) => {
+    const currentContent = cellContents.get(cellKey);
+    const newContent: CellContent = {
+      text: currentContent?.text || '',
+      isVertical: !currentContent?.isVertical,
+      alignment: currentContent?.alignment || 'center'
+    };
+    
+    const newCellContents = new Map(cellContents);
+    newCellContents.set(cellKey, newContent);
+    setCellContents(newCellContents);
+  };
+
+  const setCellAlignment = (cellKey: string, alignment: 'left' | 'center' | 'right') => {
+    const currentContent = cellContents.get(cellKey);
+    const newContent: CellContent = {
+      text: currentContent?.text || '',
+      isVertical: currentContent?.isVertical || false,
+      alignment: alignment
+    };
+    
+    const newCellContents = new Map(cellContents);
+    newCellContents.set(cellKey, newContent);
+    setCellContents(newCellContents);
   };
 
   return {
@@ -252,8 +328,12 @@ export const useGridState = (): GridState & GridActions => {
     editingDefaultDuration,
     tempDefaultDuration,
     columnDurations,
+    cellContents,
+    editingCell,
+    tempCellText,
     // Actions
     handleCellClick,
+    handleCellDoubleClick,
     mergeCells,
     addColumnAfter,
     deleteColumn,
@@ -269,5 +349,11 @@ export const useGridState = (): GridState & GridActions => {
     setTempDuration,
     setTempDefaultDuration,
     setEditingDefaultDuration,
+    startEditingCell,
+    saveCellEdit,
+    cancelCellEdit,
+    setTempCellText,
+    toggleCellVertical,
+    setCellAlignment,
   };
 };

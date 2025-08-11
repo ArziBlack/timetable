@@ -1,9 +1,9 @@
-import React from 'react';
-import { useGridState } from './hooks/usegrid';
-import { GridControls } from './components/gridcontrols';
-import { GridHeader } from './components/gridheader';
-import { GridCell } from './components/gridcell';
-import { generateTimeLabels, canMergeCells } from './lib/util';
+import React from "react";
+import { useGridState } from "./hooks/usegrid";
+import { GridControls } from "./components/gridcontrols";
+import { GridHeader } from "./components/gridheader";
+import { GridCell } from "./components/gridcell";
+import { generateTimeLabels, canMergeCells } from "./lib/util";
 
 const App = () => {
   const gridState = useGridState();
@@ -20,7 +20,11 @@ const App = () => {
     editingDefaultDuration,
     tempDefaultDuration,
     columnDurations,
+    cellContents,
+    editingCell,
+    tempCellText,
     handleCellClick,
+    handleCellDoubleClick,
     mergeCells,
     addColumnAfter,
     deleteColumn,
@@ -32,20 +36,29 @@ const App = () => {
     resetGrid,
     setHoveredColumn,
     setOpenPopover,
+    setTempCellText,
+    toggleCellVertical,
+    setCellAlignment,
+    saveCellEdit,
+    cancelCellEdit,
   } = gridState;
 
   const gridSize = 5;
-  const dayLabels = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-  const timeLabels = generateTimeLabels(columnCount, columnDurations, defaultSlotDuration);
+  const dayLabels = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+  const timeLabels = generateTimeLabels(
+    columnCount,
+    columnDurations,
+    defaultSlotDuration
+  );
 
   const handleDefaultDurationKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') saveDefaultDurationEdit();
-    if (e.key === 'Escape') cancelDefaultDurationEdit();
+    if (e.key === "Enter") saveDefaultDurationEdit();
+    if (e.key === "Escape") cancelDefaultDurationEdit();
   };
 
   const handleDurationKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') saveDurationEdit();
-    if (e.key === 'Escape') cancelDurationEdit();
+    if (e.key === "Enter") saveDurationEdit();
+    if (e.key === "Escape") cancelDurationEdit();
   };
 
   const startEditingDefaultDuration = () => {
@@ -58,6 +71,7 @@ const App = () => {
     const isSelected = selectedCells.has(cellKey);
     const mergeInfo = mergedCells.get(cellKey);
     const isColumnHovered = hoveredColumn === col;
+    const cellContent = cellContents.get(cellKey);
 
     return (
       <GridCell
@@ -69,7 +83,16 @@ const App = () => {
         isColumnHovered={isColumnHovered}
         mergeInfo={mergeInfo}
         hiddenCells={hiddenCells}
+        cellContent={cellContent}
+        editingCell={editingCell}
+        tempCellText={tempCellText}
         onCellClick={handleCellClick}
+        onCellDoubleClick={handleCellDoubleClick}
+        onTempCellTextChange={setTempCellText}
+        onSaveCellEdit={saveCellEdit}
+        onCancelCellEdit={cancelCellEdit}
+        onToggleCellVertical={toggleCellVertical}
+        onSetCellAlignment={setCellAlignment}
       />
     );
   };
@@ -89,7 +112,9 @@ const App = () => {
       onTempDurationChange={gridState.setTempDuration}
       onKeyDown={handleDurationKeyDown}
       onBlur={saveDurationEdit}
-      onOpenPopoverChange={(open: boolean) => setOpenPopover(open ? index : null)}
+      onOpenPopoverChange={(open: boolean) =>
+        setOpenPopover(open ? index : null)
+      }
       onStartEditingDuration={() => startEditingDuration(index)}
       onAddColumnAfter={() => addColumnAfter(index)}
       onDeleteColumn={() => deleteColumn(index)}
@@ -132,7 +157,9 @@ const App = () => {
                     {dayLabels[row]}
                   </div>
                 </td>
-                {Array.from({ length: columnCount }, (_, col) => renderCell(row, col))}
+                {Array.from({ length: columnCount }, (_, col) =>
+                  renderCell(row, col)
+                )}
               </tr>
             ))}
           </tbody>
@@ -142,16 +169,52 @@ const App = () => {
       <div className="mt-6 text-sm text-gray-600">
         <h3 className="font-semibold mb-2">How to use:</h3>
         <ul className="space-y-1">
-          <li>• <strong>Default Slot Duration</strong>: Set the default time duration for new columns</li>
-          <li>• <strong>Column Menu</strong>: Hover over any time header to see the menu icon (⋮)</li>
-          <li>• <strong>Edit Duration</strong>: Change the duration for a specific column (updates all subsequent times)</li>
-          <li>• <strong>Add Column</strong>: Insert a new column after the selected one</li>
-          <li>• <strong>Delete Column</strong>: Remove the selected column</li>
-          <li>• <strong>Column Highlighting</strong>: Hover over headers to highlight the entire column</li>
+          <li>
+            • <strong>Default Slot Duration</strong>: Set the default time
+            duration for new columns
+          </li>
+          <li>
+            • <strong>Column Menu</strong>: Hover over any time header to see
+            the menu icon (⋮)
+          </li>
+          <li>
+            • <strong>Edit Duration</strong>: Change the duration for a specific
+            column (updates all subsequent times)
+          </li>
+          <li>
+            • <strong>Add Column</strong>: Insert a new column after the
+            selected one
+          </li>
+          <li>
+            • <strong>Delete Column</strong>: Remove the selected column
+          </li>
+          <li>
+            • <strong>Column Highlighting</strong>: Hover over headers to
+            highlight the entire column
+          </li>
+          <li>
+            • <strong>Cell Text Editing</strong>: Double-click any cell to edit
+            its text content
+          </li>
+          <li>
+            • <strong>Cell Menu</strong>: Hover over cells with content to see
+            formatting options
+          </li>
+          <li>
+            • <strong>Text Orientation</strong>: Toggle between horizontal and
+            vertical text
+          </li>
+          <li>
+            • <strong>Text Alignment</strong>: Choose left, center, or right
+            alignment
+          </li>
           <li>• Time headers show as "Start Time - End Time" format</li>
           <li>• Each column can have its own custom duration</li>
           <li>• Click individual cells to select them (they'll turn blue)</li>
-          <li>• Select multiple cells that form a rectangle and click "Merge Cells"</li>
+          <li>
+            • Select multiple cells that form a rectangle and click "Merge
+            Cells"
+          </li>
           <li>• Merged cells show their dimensions and appear green</li>
           <li>• Use "Reset Grid" to start over with default settings</li>
         </ul>
