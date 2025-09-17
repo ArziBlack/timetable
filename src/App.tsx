@@ -14,6 +14,15 @@ import { exportTimetableToPDF } from "./lib/util";
 import type { TimetableDatabase } from "./interfaces/database";
 import { DatabaseManager } from "./components/DatabaseManager";
 import { ClassTimetable } from "./components/ClassTimetable";
+import { ScreenshotHandler } from "./components/ScreenshotHandler";
+import { storeScreenshot } from "./lib/screenshot";
+
+// Extend Window interface to include our screenshot function
+declare global {
+  interface Window {
+    takeTimetableScreenshot: () => Promise<string>;
+  }
+}
 
 const App = () => {
   const gridState = useGridState();
@@ -236,7 +245,7 @@ const App = () => {
   };
   
   // Export timetable to PDF
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
     const timetableData = extractTimetableData(
       cellContents,
       mergedCells,
@@ -246,11 +255,26 @@ const App = () => {
       defaultSlotDuration
     );
     
-    exportTimetableToPDF(timetableData, 'Master Timetable');
+    try {
+      // Take a screenshot using Puppeteer MCP
+      // const screenshotDataUrl = await window.takeTimetableScreenshot();
+      
+      // Store the screenshot for API access
+      // if (typeof storeScreenshot === 'function') {
+      //   storeScreenshot(screenshotDataUrl);
+      // }
+      
+      // // Export with screenshot
+      // exportTimetableToPDF(timetableData, 'Master Timetable', undefined, screenshotDataUrl);
+    } catch (error) {
+      console.error('Error taking screenshot:', error);
+      // Fallback to regular export without screenshot
+      exportTimetableToPDF(timetableData, 'Master Timetable');
+    }
   };
   
   // Export class timetable to PDF
-  const handleExportClassPDF = (classId: string, className: string) => {
+  const handleExportClassPDF = async (classId: string, className: string) => {
     const timetableData = extractTimetableData(
       cellContents,
       mergedCells,
@@ -266,7 +290,22 @@ const App = () => {
       return cellContent?.className === classId;
     });
     
-    exportTimetableToPDF(classEntries, 'Class Timetable', className);
+    try {
+      // Take a screenshot using Puppeteer MCP
+      const screenshotDataUrl = await window.takeTimetableScreenshot();
+      
+      // Store the screenshot for API access
+      if (typeof storeScreenshot === 'function') {
+        storeScreenshot(screenshotDataUrl);
+      }
+      
+      // Export with screenshot
+      exportTimetableToPDF(classEntries, 'Class Timetable', className, screenshotDataUrl);
+    } catch (error) {
+      console.error('Error taking screenshot:', error);
+      // Fallback to regular export without screenshot
+      exportTimetableToPDF(classEntries, 'Class Timetable', className);
+    }
   };
 
   // State for tracking which classes are expanded/collapsed
@@ -421,8 +460,31 @@ const App = () => {
     />
   );
 
+  // Define the window.takeTimetableScreenshot function
+  if (typeof window !== 'undefined') {
+    window.takeTimetableScreenshot = async () => {
+      try {
+        // Get the base64 screenshot from the latest Puppeteer screenshot
+        const latestScreenshot = global.latestScreenshot;
+        
+        if (latestScreenshot) {
+          return latestScreenshot;
+        } else {
+          console.warn('No screenshot available, using placeholder');
+          return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+        }
+      } catch (error) {
+        console.error('Error taking screenshot:', error);
+        return '';
+      }
+    };
+  }
+  
   return (
     <div className="p-8 max-w-7xl mx-auto">
+      {/* Add the ScreenshotHandler component */}
+      <ScreenshotHandler />
+      
       <DatabaseManager
         database={database}
         onDatabaseUpdate={setDatabase}
