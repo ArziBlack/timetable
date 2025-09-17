@@ -20,7 +20,7 @@ A React-based application for creating and managing school timetables both manua
 - Save current timetable layouts as reusable templates
 - Apply templates to quickly set up new timetables
 - Manage multiple templates with names and descriptions
-- Templates preserve column structure and time durations
+- Templates preserve column structure, time durations, cell formatting, merged cells, and hidden cells
 
 ## Core Components
 
@@ -28,7 +28,7 @@ A React-based application for creating and managing school timetables both manua
 - **Teachers**: Each teacher has an ID, name, subjects they can teach, maximum periods per day, and unavailable time slots
 - **Subjects**: Each subject has an ID, name, assigned teacher, number of periods per week, priority level, and constraints
 - **Classes**: Each class has an ID, name, and assigned subjects
-- **Templates**: Saved timetable layouts with metadata and cell contents
+- **Templates**: Saved timetable layouts with metadata, cell contents, formatting properties (alignment, orientation), merged cells, and hidden cells
 - **Timetable Database**: Manages the collection of teachers, subjects, classes, blocked slots, and templates
 
 ### UI Components
@@ -43,13 +43,14 @@ A React-based application for creating and managing school timetables both manua
 - Time management with custom durations per column
 - Cell merging for activities spanning multiple periods
 - Intelligent automated scheduling algorithm
-- Template system for reusing timetable layouts
+- Template system for reusing timetable layouts with complete state preservation
 - Data export as JSON and PDF
 
 ## Technical Implementation
 - Built with React + TypeScript + Vite
 - Uses React hooks for state management
 - Component-based architecture with clear separation of concerns
+- Complete state preservation in templates (content, formatting, merged cells, hidden cells)
 
 ## Project Structure
 
@@ -64,10 +65,10 @@ src/
 │   ├── gridcontrols.tsx    # Grid control tools
 │   └── gridheader.tsx      # Grid header component
 ├── hooks/
-│   └── usegrid.ts          # Custom hook for grid functionality
+│   └── usegrid.ts          # Custom hook for grid functionality (cell management, merging, formatting, etc.)
 ├── interfaces/             # TypeScript interfaces
-│   ├── database.ts         # Database entity interfaces
-│   └── types.ts            # Common type definitions
+│   ├── database.ts         # Database entity interfaces (TimetableEntry, TimetableTemplate, etc.)
+│   └── types.ts            # Common type definitions (GridActions, etc.)
 ├── lib/                    # Utility functions
 │   ├── template.ts         # Template management functions
 │   ├── timetable.ts        # Timetable generation logic
@@ -79,9 +80,9 @@ src/
 ## Key Functions
 
 ### Template Management
-- `saveAsTemplate`: Creates a template from current timetable state
+- `saveAsTemplate`: Creates a template from current timetable state (including cell content, formatting, merged cells, and hidden cells)
 - `saveTemplateToDatabase`: Persists a template to the database
-- `applyTemplate`: Applies a template to the current timetable
+- `applyTemplate`: Applies a template to the current timetable, restoring all saved state
 - `deleteTemplate`: Removes a template from the database
 
 ### Timetable Generation
@@ -93,6 +94,8 @@ src/
 - `mergeCells`: Combines selected cells
 - `resetGrid`: Clears the grid and resets to default state
 - `handleExportData`: Exports timetable data as JSON
+- `setAllMergedCells`: Sets all merged cells from a template
+- `setAllHiddenCells`: Sets all hidden cells from a template
 
 ## Getting Started
 
