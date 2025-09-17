@@ -12,12 +12,14 @@ import {
 } from "./lib/timetable";
 import type { TimetableDatabase } from "./interfaces/database";
 import { DatabaseManager } from "./components/DatabaseManager";
+import { ClassTimetable } from "./components/ClassTimetable";
 
 const App = () => {
   const gridState = useGridState();
   const [database, setDatabase] = useState<TimetableDatabase>({
     teachers: [],
     subjects: [],
+    classes: [],
     blockedSlots: [],
     blockedTexts: defaultBlockedTexts,
   });
@@ -162,6 +164,23 @@ const App = () => {
           avoidConsecutive: true
         }
       ],
+      classes: [
+        {
+          id: 'class-1a',
+          name: 'Class 1A',
+          subjects: ['math', 'english', 'physics', 'history', 'pe']
+        },
+        {
+          id: 'class-1b',
+          name: 'Class 1B',
+          subjects: ['math', 'english', 'chemistry', 'geography', 'pe']
+        },
+        {
+          id: 'class-1c',
+          name: 'Class 1C',
+          subjects: ['math', 'english', 'biology', 'history', 'pe']
+        }
+      ],
       blockedSlots: [],
       blockedTexts: defaultBlockedTexts
     };
@@ -215,8 +234,17 @@ const App = () => {
       });
   };
 
-  // Generate automated timetable
-  const handleGenerateAutomatedTimetable = () => {
+  // State for tracking which classes are expanded/collapsed
+  const [expandedClasses, setExpandedClasses] = useState<{[key: string]: boolean}>({});
+
+  // Function to clear the timetable
+  const handleClearTimetable = () => {
+    gridState.setAllCellContents(new Map());
+    alert("Timetable cleared!");
+  };
+
+  // Generate automated timetable for a specific class or all classes
+  const handleGenerateAutomatedTimetable = (classId?: string) => {
     if (database.subjects.length === 0) {
       alert("Please add subjects to the database first.");
       return;
@@ -226,26 +254,83 @@ const App = () => {
       database,
       columnCount,
       cellContents,
-      hiddenCells
+      hiddenCells,
+      classId
     );
 
     // Update the grid state with new cell contents
     gridState.setAllCellContents(newCellContents);
 
+    // Get the number of subjects for the selected class
+    let subjectsCount = database.subjects.length;
+    let periodsCount = database.subjects.reduce((sum, s) => sum + s.periodsPerWeek, 0);
+    
+    if (classId) {
+      const selectedClass = database.classes.find(c => c.id === classId);
+      if (selectedClass) {
+        const classSubjects = database.subjects.filter(s => selectedClass.subjects.includes(s.id));
+        subjectsCount = classSubjects.length;
+        periodsCount = classSubjects.reduce((sum, s) => sum + s.periodsPerWeek, 0);
+      }
+    }
+
     alert(
-      `Timetable generated! Added ${database.subjects.reduce(
-        (sum, s) => sum + s.periodsPerWeek,
-        0
-      )} periods across ${database.subjects.length} subjects.`
+      `Timetable generated! Added ${periodsCount} periods across ${subjectsCount} subjects.`
     );
   };
+  
+  // UI elements for timetable actions
+  const timetableControls = (
+    <div className="flex flex-col gap-2 mb-4">
+      <div className="flex gap-2 items-center">
+        <button
+          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          onClick={() => handleGenerateAutomatedTimetable()}
+        >
+          Generate All Timetables
+        </button>
+        <button
+          className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
+          onClick={handleClearTimetable}
+        >
+          Clear Timetable
+        </button>
+      </div>
+      
+      {database.classes.length > 0 && (
+        <div className="flex items-center gap-2 mt-2">
+          <span className="font-medium">Toggle class timetables:</span>
+          {database.classes.map((cls) => (
+            <button
+              key={cls.id}
+              className={`px-3 py-1 rounded text-sm ${expandedClasses[cls.id] ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
+              onClick={() => setExpandedClasses(prev => ({
+                ...prev,
+                [cls.id]: !prev[cls.id]
+              }))}
+            >
+              {cls.name}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 
-  const renderCell = (row: number, col: number) => {
+  const renderCell = (row: number, col: number, classId?: string) => {
     const cellKey = `${row}-${col}`;
     const isSelected = selectedCells.has(cellKey);
     const mergeInfo = mergedCells.get(cellKey);
     const isColumnHovered = hoveredColumn === col;
-    const cellContent = cellContents.get(cellKey);
+    let cellContent = cellContents.get(cellKey);
+    
+    // Filter cell content based on class ID if provided
+    if (classId && cellContent) {
+      // Only show content for this specific class
+      if (cellContent.className && cellContent.className !== classId) {
+        cellContent = undefined;
+      }
+    }
 
     return (
       <GridCell
@@ -321,7 +406,13 @@ const App = () => {
         onDefaultDurationKeyDown={handleDefaultDurationKeyDown}
       />
 
-      <div className="inline-block border-4 border-gray-600 rounded-lg overflow-hidden shadow-lg overflow-x-auto">
+      {timetableControls}
+
+      {/* Main timetable for all classes */}
+      <div className="inline-block border-4 border-gray-600 rounded-lg overflow-hidden shadow-lg overflow-x-auto mb-8">
+        <div className="bg-blue-600 text-white font-bold py-2 px-4 text-center">
+          Master Timetable (All Classes)
+        </div>
         <table className="border-collapse">
           <thead>
             <tr>
@@ -347,6 +438,20 @@ const App = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Individual class timetables */}
+      {database.classes.map((cls) => (
+        expandedClasses[cls.id] && (
+          <ClassTimetable
+            key={cls.id}
+            classData={cls}
+            dayLabels={dayLabels}
+            timeLabels={timeLabels}
+            onGenerateTimetable={handleGenerateAutomatedTimetable}
+            cellContents={cellContents}
+          />
+        )
+      ))}
 
       <div className="mt-6 text-sm text-gray-600">
         <h3 className="font-semibold mb-2">How to use:</h3>

@@ -63,10 +63,25 @@ export const generateAutomatedTimetable = (
   database: TimetableDatabase,
   columnCount: number,
   existingCellContents: Map<string, CellContent>,
-  hiddenCells: Set<string>
+  hiddenCells: Set<string>,
+  selectedClassId?: string
 ): Map<string, CellContent> => {
   const newCellContents = new Map(existingCellContents);
-  const { teachers, subjects, blockedTexts = defaultBlockedTexts } = database;
+  const { teachers, subjects, classes, blockedTexts = defaultBlockedTexts } = database;
+  
+  // Filter subjects based on selected class if provided
+  let classSubjects = subjects;
+  let className = '';
+  
+  if (selectedClassId) {
+    const selectedClass = classes.find(c => c.id === selectedClassId);
+    if (selectedClass) {
+      className = selectedClass.name;
+      classSubjects = subjects.filter(subject => 
+        selectedClass.subjects.includes(subject.id)
+      );
+    }
+  }
   
   // Create a schedule grid (5 days × columnCount slots)
   const schedule: (Subject | null)[][] = Array(5).fill(null).map(() => Array(columnCount).fill(null));
@@ -87,7 +102,7 @@ export const generateAutomatedTimetable = (
   }
   
   // Sort subjects by priority and periods per week
-  const sortedSubjects = [...subjects].sort((a, b) => {
+  const sortedSubjects = [...classSubjects].sort((a, b) => {
     const priorityWeight = { high: 3, medium: 2, low: 1 };
     const aPriority = priorityWeight[a.priority] * a.periodsPerWeek;
     const bPriority = priorityWeight[b.priority] * b.periodsPerWeek;
@@ -165,16 +180,22 @@ export const generateAutomatedTimetable = (
       const cellKey = `${row}-${col}`;
       const subject = schedule[row][col];
       
-      if (subject && subject !== 'BLOCKED') {
+      if (subject && typeof subject !== 'string') {
         const teacher = teachers.find(t => t.id === subject.teacherId);
-        const text = teacher ? 
+        let text = teacher ? 
           `${subject.name}\n${teacher.name}` : 
           subject.name;
+        
+        // Add class name if a specific class is selected
+        if (className) {
+          text = `${text}\n(${className})`;
+        }
         
         newCellContents.set(cellKey, {
           text,
           isVertical: false,
-          alignment: 'center'
+          alignment: 'center',
+          className: selectedClassId // Store the class ID for filtering
         });
       }
     }

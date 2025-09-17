@@ -18,12 +18,19 @@ export interface Teacher {
     avoidConsecutive?: boolean; // avoid back-to-back periods
   }
   
+  export interface Class {
+    id: string;
+    name: string; // e.g., "Class 1A", "Grade 10B"
+    subjects: string[]; // IDs of subjects assigned to this class
+  }
+  
   export interface TimetableEntry {
     cellKey: string;
     row: number;
     col: number;
     subject?: Subject;
     teacher?: Teacher;
+    class?: Class;
     customText?: string;
     day: string;
     timeSlot: string;
@@ -32,6 +39,7 @@ export interface Teacher {
   export interface TimetableDatabase {
     teachers: Teacher[];
     subjects: Subject[];
+    classes: Class[];
     blockedSlots: string[]; // for breaks, devotion, etc.
     blockedTexts: string[]; // texts to avoid when auto-generating
   }

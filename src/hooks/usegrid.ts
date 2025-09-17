@@ -267,7 +267,8 @@ export const useGridState = (): GridState & GridActions => {
       const newContent: CellContent = {
         text: tempCellText,
         isVertical: currentContent?.isVertical || false,
-        alignment: currentContent?.alignment || 'center'
+        alignment: currentContent?.alignment || 'center',
+        className: currentContent?.className // Preserve the class ID
       };
       
       const newCellContents = new Map(cellContents);
@@ -293,7 +294,8 @@ export const useGridState = (): GridState & GridActions => {
     const newContent: CellContent = {
       text: currentContent?.text || '',
       isVertical: !currentContent?.isVertical,
-      alignment: currentContent?.alignment || 'center'
+      alignment: currentContent?.alignment || 'center',
+      className: currentContent?.className // Preserve the class ID
     };
     
     const newCellContents = new Map(cellContents);
@@ -306,7 +308,8 @@ export const useGridState = (): GridState & GridActions => {
     const newContent: CellContent = {
       text: currentContent?.text || '',
       isVertical: currentContent?.isVertical || false,
-      alignment: alignment
+      alignment: alignment,
+      className: currentContent?.className // Preserve the class ID
     };
     
     const newCellContents = new Map(cellContents);
@@ -315,6 +318,8 @@ export const useGridState = (): GridState & GridActions => {
   };
 
   const setAllCellContents = (newCellContents: Map<string, CellContent>) => {
+    // This function already properly handles the className property
+    // as it replaces the entire cellContents map
     setCellContents(newCellContents);
   };
 

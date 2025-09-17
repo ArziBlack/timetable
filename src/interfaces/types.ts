@@ -14,6 +14,7 @@ export interface CellContent {
   text: string;
   isVertical: boolean;
   alignment: 'left' | 'center' | 'right';
+  className?: string; // ID of the class this cell belongs to
 }
 
 export interface CellPosition {

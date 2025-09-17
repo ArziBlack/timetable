@@ -2,7 +2,7 @@
 // components/DatabaseManager.tsx
 import React, { useState } from 'react';
 import { Plus, Trash2, Users, BookOpen, Zap, Database } from 'lucide-react';
-import type { Teacher, Subject, TimetableDatabase } from '../interfaces/database';
+import type { Teacher, Subject, TimetableDatabase, Class } from '../interfaces/database';
 
 interface DatabaseManagerProps {
   database: TimetableDatabase;
@@ -17,9 +17,10 @@ export const DatabaseManager: React.FC<DatabaseManagerProps> = ({
   onGenerateTimetable,
   onLoadSampleData,
 }) => {
-  const [activeTab, setActiveTab] = useState<'teachers' | 'subjects'>('teachers');
+  const [activeTab, setActiveTab] = useState<'teachers' | 'subjects' | 'classes'>('teachers');
   const [showAddTeacher, setShowAddTeacher] = useState(false);
   const [showAddSubject, setShowAddSubject] = useState(false);
+  const [showAddClass, setShowAddClass] = useState(false);
   
   const [newTeacher, setNewTeacher] = useState<Partial<Teacher>>({
     name: '',
@@ -32,6 +33,11 @@ export const DatabaseManager: React.FC<DatabaseManagerProps> = ({
     teacherId: '',
     periodsPerWeek: 3,
     priority: 'medium'
+  });
+  
+  const [newClass, setNewClass] = useState<Partial<Class>>({
+    name: '',
+    subjects: []
   });
 
   const addTeacher = () => {
@@ -91,6 +97,31 @@ export const DatabaseManager: React.FC<DatabaseManagerProps> = ({
       subjects: database.subjects.filter((s: Subject) => s.id !== subjectId)
     });
   };
+  
+  const addClass = () => {
+    if (!newClass.name?.trim()) return;
+    
+    const classItem = {
+      id: `class-${Date.now()}`,
+      name: newClass.name.trim(),
+      subjects: newClass.subjects || []
+    };
+    
+    onDatabaseUpdate({
+      ...database,
+      classes: [...database.classes, classItem]
+    });
+    
+    setNewClass({ name: '', subjects: [] });
+    setShowAddClass(false);
+  };
+  
+  const removeClass = (classId: string) => {
+    onDatabaseUpdate({
+      ...database,
+      classes: database.classes.filter((c) => c.id !== classId)
+    });
+  };
 
   const updateBlockedTexts = (texts: string) => {
     const textArray = texts.split(',').map(t => t.trim()).filter(t => t);
@@ -139,7 +170,105 @@ export const DatabaseManager: React.FC<DatabaseManagerProps> = ({
               Load Sample Data
             </button>
           )}
+
+      {/* Classes Tab */}
+      {activeTab === 'classes' && (
+        <div>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold">Classes</h3>
+            <button
+              onClick={() => setShowAddClass(!showAddClass)}
+              disabled={database.subjects.length === 0}
+              className={`px-3 py-1 rounded flex items-center gap-1 text-sm ${
+                database.subjects.length > 0
+                  ? 'bg-green-500 hover:bg-green-600 text-white'
+                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              }`}
+            >
+              <Plus className="w-4 h-4" />
+              Add Class
+            </button>
+          </div>
+
+          {showAddClass && (
+            <div className="bg-gray-50 p-4 rounded mb-4">
+              <div className="grid grid-cols-1 gap-4">
+                <input
+                  type="text"
+                  placeholder="Class Name (e.g., Class 1A)"
+                  value={newClass.name || ''}
+                  onChange={(e) => setNewClass({ ...newClass, name: e.target.value })}
+                  className="border rounded px-3 py-2"
+                />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Select Subjects</label>
+                  <div className="border rounded p-3 max-h-40 overflow-y-auto">
+                    {database.subjects.map((subject: Subject) => (
+                      <div key={subject.id} className="flex items-center mb-2">
+                        <input
+                          type="checkbox"
+                          id={`subject-${subject.id}`}
+                          checked={(newClass.subjects || []).includes(subject.id)}
+                          onChange={(e) => {
+                            const updatedSubjects = e.target.checked
+                              ? [...(newClass.subjects || []), subject.id]
+                              : (newClass.subjects || []).filter(id => id !== subject.id);
+                            setNewClass({ ...newClass, subjects: updatedSubjects });
+                          }}
+                          className="mr-2"
+                        />
+                        <label htmlFor={`subject-${subject.id}`} className="text-sm">
+                          {subject.name}
+                        </label>
+                      </div>
+                    ))}
+                    {database.subjects.length === 0 && (
+                      <p className="text-gray-500 text-sm">No subjects available</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-2 mt-3">
+                <button
+                  onClick={addClass}
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm"
+                >
+                  Add Class
+                </button>
+                <button
+                  onClick={() => setShowAddClass(false)}
+                  className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded text-sm"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-2">
+            {database.classes.map((classItem) => (
+              <div key={classItem.id} className="flex items-center justify-between bg-gray-50 p-3 rounded">
+                <div>
+                  <span className="font-medium">{classItem.name}</span>
+                  <span className="text-gray-500 text-sm ml-2">
+                    ({classItem.subjects.length} subjects)
+                  </span>
+                </div>
+                <button
+                  onClick={() => removeClass(classItem.id)}
+                  className="text-red-500 hover:text-red-700"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+            {database.classes.length === 0 && (
+              <p className="text-gray-500 text-center py-4">No classes added yet</p>
+            )}
+          </div>
         </div>
+      )}
+    </div>
       </div>
 
       {/* Tab Navigation */}
@@ -165,6 +294,17 @@ export const DatabaseManager: React.FC<DatabaseManagerProps> = ({
         >
           <BookOpen className="w-4 h-4 inline mr-2" />
           Subjects ({database.subjects.length})
+        </button>
+        <button
+          onClick={() => setActiveTab('classes')}
+          className={`pb-2 px-1 font-medium transition-colors ${
+            activeTab === 'classes' 
+              ? 'text-blue-600 border-b-2 border-blue-600' 
+              : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          <BookOpen className="w-4 h-4 inline mr-2" />
+          Classes ({database.classes.length})
         </button>
       </div>
 
