@@ -462,22 +462,22 @@ const App = () => {
 
   // Define the window.takeTimetableScreenshot function
   if (typeof window !== 'undefined') {
-    window.takeTimetableScreenshot = async () => {
-      try {
+    // window.takeTimetableScreenshot = async () => {
+      // try {
         // Get the base64 screenshot from the latest Puppeteer screenshot
-        const latestScreenshot = global.latestScreenshot;
+        // const latestScreenshot = global.latestScreenshot;
         
-        if (latestScreenshot) {
-          return latestScreenshot;
-        } else {
-          console.warn('No screenshot available, using placeholder');
-          return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
-        }
-      } catch (error) {
-        console.error('Error taking screenshot:', error);
-        return '';
-      }
-    };
+        // if (latestScreenshot) {
+        //   return latestScreenshot;
+        // } else {
+        //   console.warn('No screenshot available, using placeholder');
+        //   return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+        // }
+      // } catch (error) {
+        // console.error('Error taking screenshot:', error);
+        // return '';
+      // }
+    // };
   }
   
   return (

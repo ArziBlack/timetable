@@ -174,6 +174,45 @@ export const generateAutomatedTimetable = (
     }
   }
   
+  // Fill any remaining empty slots with subjects in a round-robin fashion
+  if (sortedSubjects.length > 0) {
+    let subjectIndex = 0;
+    
+    for (let row = 0; row < 5; row++) {
+      for (let col = 0; col < columnCount; col++) {
+        if (schedule[row][col] === null) {
+          // Find a subject with an available teacher
+          let foundSubject = false;
+          let attemptsToFindSubject = 0;
+          
+          while (!foundSubject && attemptsToFindSubject < sortedSubjects.length) {
+            const subject = sortedSubjects[subjectIndex];
+            const teacher = teachers.find(t => t.id === subject.teacherId);
+            
+            if (teacher) {
+              const cellKey = `${row}-${col}`;
+              const maxPerDay = teacher.maxPeriodsPerDay || 3;
+              
+              // Check if teacher is available
+              if (teacherDailyCount[teacher.id][row] < maxPerDay && 
+                  !teacher.unavailableSlots?.includes(cellKey)) {
+                
+                // Assign the subject
+                schedule[row][col] = subject;
+                teacherDailyCount[teacher.id][row]++;
+                foundSubject = true;
+              }
+            }
+            
+            // Move to next subject in round-robin fashion
+            subjectIndex = (subjectIndex + 1) % sortedSubjects.length;
+            attemptsToFindSubject++;
+          }
+        }
+      }
+    }
+  }
+  
   // Convert schedule back to cell contents
   for (let row = 0; row < 5; row++) {
     for (let col = 0; col < columnCount; col++) {
