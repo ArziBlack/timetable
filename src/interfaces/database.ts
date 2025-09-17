@@ -36,10 +36,22 @@ export interface Teacher {
     timeSlot: string;
   }
   
+  export interface TimetableTemplate {
+    id: string;
+    name: string;
+    description?: string;
+    entries: TimetableEntry[];
+    columnCount: number;
+    columnDurations: { [key: number]: number };
+    defaultSlotDuration: number;
+    createdAt: string;
+  }
+  
   export interface TimetableDatabase {
     teachers: Teacher[];
     subjects: Subject[];
     classes: Class[];
     blockedSlots: string[]; // for breaks, devotion, etc.
     blockedTexts: string[]; // texts to avoid when auto-generating
+    templates?: TimetableTemplate[]; // saved timetable templates
   }
