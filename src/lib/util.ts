@@ -117,12 +117,11 @@ export const exportTimetableToGridPDF = (
   doc.save(`${title.toLowerCase().replace(/\s+/g, '-')}.pdf`);
 };
 
-// Export timetable data to PDF with screenshot
+// Export timetable data to PDF
 export const exportTimetableToPDF = (
   timetableData: TimetableEntry[],
   title: string = 'Timetable',
-  className?: string,
-  screenshotDataUrl?: string
+  className?: string
 ): void => {
   // Create a new PDF document in landscape orientation
   const doc = new jsPDF({
@@ -136,28 +135,6 @@ export const exportTimetableToPDF = (
   doc.text(fullTitle, 14, 15);
   doc.setFontSize(10);
   doc.text(`Generated on ${new Date().toLocaleDateString()}`, 14, 22);
-  
-  // If screenshot is provided, add it to the PDF
-  if (screenshotDataUrl) {
-    // Add the screenshot
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    
-    // Calculate dimensions to fit the screenshot while maintaining aspect ratio
-    const margin = 20; // margin in mm
-    const maxWidth = pageWidth - (margin * 2);
-    const maxHeight = pageHeight - margin - 30; // 30mm from the top for the title
-    
-    // Add the screenshot to the PDF
-    doc.addImage(screenshotDataUrl, 'PNG', margin, 30, maxWidth, maxHeight);
-    
-    // Add a new page for the grid view
-    doc.addPage();
-    doc.setFontSize(16);
-    doc.text(`${fullTitle} - Grid View`, 14, 15);
-    doc.setFontSize(10);
-    doc.text(`Generated on ${new Date().toLocaleDateString()}`, 14, 22);
-  }
   
   // Get unique days and time slots from the data
   const days = Array.from(new Set(timetableData.map(entry => entry.day)));

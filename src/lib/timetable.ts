@@ -222,7 +222,7 @@ export const generateAutomatedTimetable = (
       if (subject && typeof subject !== 'string') {
         const teacher = teachers.find(t => t.id === subject.teacherId);
         let text = teacher ? 
-          `${subject.name}\n${teacher.name}` : 
+          `${subject.name}\n(${teacher.name})` : 
           subject.name;
         
         // Add class name if a specific class is selected

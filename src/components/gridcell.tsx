@@ -130,15 +130,25 @@ export const GridCell: React.FC<GridCellProps> = ({
                   whiteSpace: "nowrap",
                 }}
               >
-                <span
+                <div
                   className="block break-words origin-center"
                   style={{
                     maxWidth: cellContent.isVertical ? "20px" : "100%",
                     lineHeight: "1.2",
                   }}
                 >
-                  {cellContent.text}
-                </span>
+                  {cellContent.text.split('\n').map((line, index) => {
+                    // Check if this line is a teacher name (starts with parenthesis)
+                    if (line.startsWith('(') && line.endsWith(')')) {
+                      return (
+                        <div key={index} className="text-xs" style={{ fontSize: '50%' }}>
+                          {line}
+                        </div>
+                      );
+                    }
+                    return <div key={index}>{line}</div>;
+                  })}
+                </div>
               </div>
             ) : (
               <span className="text-gray-400 text-xs">
