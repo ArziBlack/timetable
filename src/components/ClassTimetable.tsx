@@ -12,6 +12,7 @@ interface ClassTimetableProps {
   timeLabels: string[];
   onGenerateTimetable: (classId: string) => void;
   cellContents: Map<string, CellContent>;
+  onExportClassPDF?: (classId: string, className: string) => void;
 }
 
 export const ClassTimetable: React.FC<ClassTimetableProps> = ({
@@ -19,7 +20,8 @@ export const ClassTimetable: React.FC<ClassTimetableProps> = ({
   dayLabels,
   timeLabels,
   onGenerateTimetable,
-  cellContents
+  cellContents,
+  onExportClassPDF
 }) => {
   // Each class timetable has its own grid state
   const gridState = useGridState();
@@ -149,12 +151,22 @@ export const ClassTimetable: React.FC<ClassTimetableProps> = ({
     <div className="inline-block border-4 border-gray-600 rounded-lg overflow-hidden shadow-lg overflow-x-auto mb-8 mr-4">
       <div className="bg-blue-600 text-white font-bold py-2 px-4 text-center flex justify-between items-center">
         <span>{classData.name}</span>
-        <button 
-          className="bg-blue-700 hover:bg-blue-800 text-white text-xs py-1 px-2 rounded"
-          onClick={() => onGenerateTimetable(classData.id)}
-        >
-          Generate Timetable
-        </button>
+        <div className="flex gap-2">
+          <button 
+            className="bg-blue-700 hover:bg-blue-800 text-white text-xs py-1 px-2 rounded"
+            onClick={() => onGenerateTimetable(classData.id)}
+          >
+            Generate Timetable
+          </button>
+          {onExportClassPDF && (
+            <button 
+              className="bg-green-600 hover:bg-green-700 text-white text-xs py-1 px-2 rounded"
+              onClick={() => onExportClassPDF(classData.id, classData.name)}
+            >
+              Export PDF
+            </button>
+          )}
+        </div>
       </div>
       
       {/* Class-specific grid controls */}

@@ -10,6 +10,7 @@ import {
   generateAutomatedTimetable,
   defaultBlockedTexts,
 } from "./lib/timetable";
+import { exportTimetableToPDF } from "./lib/util";
 import type { TimetableDatabase } from "./interfaces/database";
 import { DatabaseManager } from "./components/DatabaseManager";
 import { ClassTimetable } from "./components/ClassTimetable";
@@ -233,6 +234,40 @@ const App = () => {
         alert("Timetable data logged to console (clipboard copy failed)");
       });
   };
+  
+  // Export timetable to PDF
+  const handleExportPDF = () => {
+    const timetableData = extractTimetableData(
+      cellContents,
+      mergedCells,
+      hiddenCells,
+      columnCount,
+      columnDurations,
+      defaultSlotDuration
+    );
+    
+    exportTimetableToPDF(timetableData, 'Master Timetable');
+  };
+  
+  // Export class timetable to PDF
+  const handleExportClassPDF = (classId: string, className: string) => {
+    const timetableData = extractTimetableData(
+      cellContents,
+      mergedCells,
+      hiddenCells,
+      columnCount,
+      columnDurations,
+      defaultSlotDuration
+    );
+    
+    // Filter entries for this class
+    const classEntries = timetableData.filter(entry => {
+      const cellContent = cellContents.get(entry.cellKey);
+      return cellContent?.className === classId;
+    });
+    
+    exportTimetableToPDF(classEntries, 'Class Timetable', className);
+  };
 
   // State for tracking which classes are expanded/collapsed
   const [expandedClasses, setExpandedClasses] = useState<{[key: string]: boolean}>({});
@@ -294,6 +329,12 @@ const App = () => {
           onClick={handleClearTimetable}
         >
           Clear Timetable
+        </button>
+        <button
+          className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+          onClick={handleExportPDF}
+        >
+          Export as PDF
         </button>
       </div>
       
@@ -449,6 +490,7 @@ const App = () => {
             timeLabels={timeLabels}
             onGenerateTimetable={handleGenerateAutomatedTimetable}
             cellContents={cellContents}
+            onExportClassPDF={handleExportClassPDF}
           />
         )
       ))}

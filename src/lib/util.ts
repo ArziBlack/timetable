@@ -1,5 +1,8 @@
 // utils.ts
 import type { ColumnTimes } from '../interfaces/types';
+import type { TimetableEntry } from '../interfaces/database';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 export const getCellKey = (row: number, col: number): string => `${row}-${col}`;
 
@@ -14,6 +17,104 @@ export const minutesToTimeString = (minutes: number): string => {
   } else {
     return `${displayHour}:${mins.toString().padStart(2, '0')} ${period}`;
   }
+};
+
+// Export timetable data to PDF
+export const exportTimetableToPDF = (
+  timetableData: TimetableEntry[],
+  title: string = 'Timetable',
+  className?: string
+): void => {
+  // Create a new PDF document in landscape orientation
+  const doc = new jsPDF({
+    orientation: 'landscape',
+    unit: 'mm'
+  });
+  
+  // Add title
+  const fullTitle = className ? `${title} - ${className}` : title;
+  doc.setFontSize(16);
+  doc.text(fullTitle, 14, 15);
+  doc.setFontSize(10);
+  doc.text(`Generated on ${new Date().toLocaleDateString()}`, 14, 22);
+  
+  // Get unique days and time slots from the data
+  const days = Array.from(new Set(timetableData.map(entry => entry.day)));
+  const timeSlots = Array.from(new Set(timetableData.map(entry => entry.timeSlot)));
+  timeSlots.sort((a, b) => {
+    // Extract hours and minutes for comparison
+    const getMinutes = (timeStr: string) => {
+      const [time, period] = timeStr.split(' ');
+      let [hours, minutes] = time.split(':').map(Number);
+      if (period === 'PM' && hours !== 12) hours += 12;
+      if (period === 'AM' && hours === 12) hours = 0;
+      return hours * 60 + minutes;
+    };
+    return getMinutes(a) - getMinutes(b);
+  });
+  
+  // Create a grid-like timetable
+  const tableHead = [['', ...timeSlots]];
+  const tableBody = days.map(day => {
+    const rowData = [day];
+    
+    // Fill in cells for each time slot
+    timeSlots.forEach(timeSlot => {
+      const entriesForCell = timetableData.filter(
+        entry => entry.day === day && entry.timeSlot === timeSlot
+      );
+      
+      if (entriesForCell.length > 0) {
+        // Join multiple entries with line breaks if needed
+        rowData.push(
+          entriesForCell
+            .map(entry => entry.customText || '')
+            .filter(text => text)
+            .join('\n')
+        );
+      } else {
+        rowData.push('');
+      }
+    });
+    
+    return rowData;
+  });
+  
+  // Add the timetable grid
+  autoTable(doc, {
+    startY: 30,
+    head: tableHead,
+    body: tableBody,
+    theme: 'grid',
+    headStyles: { 
+      fillColor: [66, 139, 202],
+      textColor: [255, 255, 255],
+      fontStyle: 'bold',
+      halign: 'center'
+    },
+    styles: { 
+      overflow: 'linebreak',
+      cellPadding: 3,
+      fontSize: 9
+    },
+    columnStyles: {
+      0: { 
+        cellWidth: 25,
+        fontStyle: 'bold',
+        fillColor: [200, 220, 240],
+        halign: 'center'
+      }
+    },
+    alternateRowStyles: {
+      fillColor: [240, 245, 250]
+    },
+    didDrawCell: (data) => {
+      // Add custom styling if needed
+    }
+  });
+  
+  // Save the PDF
+  doc.save(`${title.toLowerCase().replace(/\s+/g, '-')}.pdf`);
 };
 
 export const getColumnDuration = (
