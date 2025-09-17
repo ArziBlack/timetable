@@ -40,15 +40,19 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({
     }
 
     const template = saveAsTemplate(
+      templateName,
       cellContents,
       mergedCells,
       hiddenCells,
       columnCount,
       columnDurations,
-      defaultSlotDuration,
-      templateName,
-      templateDescription
+      defaultSlotDuration
     );
+    
+    // Add description if provided
+    if (templateDescription) {
+      template.description = templateDescription;
+    }
 
     const updatedDatabase = saveTemplateToDatabase(template, database);
     onDatabaseUpdate(updatedDatabase);
@@ -103,7 +107,7 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({
                     <p className="text-sm text-gray-500">{template.description}</p>
                   )}
                   <p className="text-xs text-gray-400">
-                    Created: {new Date(template.createdAt).toLocaleString()}
+                    Created: {template?.createdAt ? new Date(template.createdAt).toLocaleString() : 'N/A'}
                   </p>
                 </div>
                 <div className="flex space-x-2">

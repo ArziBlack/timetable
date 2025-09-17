@@ -322,6 +322,14 @@ export const useGridState = (): GridState & GridActions => {
     // as it replaces the entire cellContents map
     setCellContents(newCellContents);
   };
+  
+  const setAllMergedCells = (newMergedCells: Map<string, any>) => {
+    setMergedCells(newMergedCells);
+  };
+  
+  const setAllHiddenCells = (newHiddenCells: Set<string>) => {
+    setHiddenCells(newHiddenCells);
+  };
 
   return {
     // State
@@ -365,5 +373,7 @@ export const useGridState = (): GridState & GridActions => {
     toggleCellVertical,
     setCellAlignment,
     setAllCellContents,
+    setAllMergedCells,
+    setAllHiddenCells,
   };
 };

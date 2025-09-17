@@ -44,9 +44,9 @@ export interface GridActions {
   handleCellClick: (row: number, col: number) => void;
   handleCellDoubleClick: (row: number, col: number) => void;
   mergeCells: () => void;
-  addColumnAfter: (afterColumnIndex: number) => void;
-  deleteColumn: (columnIndex: number) => void;
-  startEditingDuration: (columnIndex: number) => void;
+  addColumnAfter: (column: number) => void;
+  deleteColumn: (column: number) => void;
+  startEditingDuration: (column: number) => void;
   saveDurationEdit: () => void;
   cancelDurationEdit: () => void;
   saveDefaultDurationEdit: () => void;
@@ -65,4 +65,6 @@ export interface GridActions {
   setCellAlignment: (cellKey: string, alignment: 'left' | 'center' | 'right') => void;
   // updateCellContents: (contents: Map<string, CellContent>) => void;
   setAllCellContents: (contents: Map<string, CellContent>) => void;
+  setAllMergedCells: (mergedCells: Map<string, any>) => void;
+  setAllHiddenCells: (hiddenCells: Set<string>) => void;
 }

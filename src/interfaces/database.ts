@@ -34,6 +34,8 @@ export interface Teacher {
     customText?: string;
     day: string;
     timeSlot: string;
+    isVertical?: boolean;
+    alignment?: 'left' | 'center' | 'right';
   }
   
   export interface TimetableTemplate {
@@ -44,7 +46,9 @@ export interface Teacher {
     columnCount: number;
     columnDurations: { [key: number]: number };
     defaultSlotDuration: number;
-    createdAt: string;
+    createdAt?: string;
+    mergedCellsData?: { [key: string]: any };
+    hiddenCellsArray?: string[];
   }
   
   export interface TimetableDatabase {

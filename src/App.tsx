@@ -320,6 +320,15 @@ const App = () => {
   const handleApplyTemplate = (templateResult: ReturnType<typeof applyTemplate>) => {
     gridState.setAllCellContents(templateResult.cellContents);
     
+    // Update merged and hidden cells if available in the template
+    if (templateResult.mergedCells) {
+      gridState.setAllMergedCells(templateResult.mergedCells);
+    }
+    
+    if (templateResult.hiddenCells) {
+      gridState.setAllHiddenCells(templateResult.hiddenCells);
+    }
+    
     // Update grid state with template settings
     // Note: This would require additional hooks in useGridState to update these values
     // For now, we'll show an alert that some settings might need manual adjustment

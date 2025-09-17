@@ -4,16 +4,15 @@ import type { TimetableTemplate, TimetableEntry, TimetableDatabase } from '../in
 import type { CellContent } from '../interfaces/types';
 import { extractTimetableData } from './timetable';
 
-// Save current timetable as a template
+// Save current grid state as a template
 export const saveAsTemplate = (
+  name: string,
   cellContents: Map<string, CellContent>,
   mergedCells: Map<string, any>,
   hiddenCells: Set<string>,
   columnCount: number,
   columnDurations: { [key: number]: number },
-  defaultSlotDuration: number,
-  name: string,
-  description?: string
+  defaultSlotDuration: number
 ): TimetableTemplate => {
   // Extract timetable data
   const entries = extractTimetableData(
@@ -24,19 +23,28 @@ export const saveAsTemplate = (
     columnDurations,
     defaultSlotDuration
   );
-
+  
+  // Store merged cells information
+  const mergedCellsData: { [key: string]: any } = {};
+  mergedCells.forEach((value, key) => {
+    mergedCellsData[key] = value;
+  });
+  
+  // Store hidden cells as array
+  const hiddenCellsArray = Array.from(hiddenCells);
+  
   // Create template object
   const template: TimetableTemplate = {
     id: uuidv4(),
     name,
-    description,
     entries,
     columnCount,
     columnDurations,
     defaultSlotDuration,
-    createdAt: new Date().toISOString()
+    mergedCellsData,
+    hiddenCellsArray
   };
-
+  
   return template;
 };
 
@@ -72,26 +80,49 @@ export const applyTemplate = (
   columnCount: number;
   columnDurations: { [key: number]: number };
   defaultSlotDuration: number;
+  mergedCells: Map<string, any>;
+  hiddenCells: Set<string>;
 } => {
   // Create cell contents from template entries
   const cellContents = new Map<string, CellContent>();
+  const mergedCells = new Map<string, any>();
+  const hiddenCells = new Set<string>();
   
+  // Process entries to restore cell contents and properties
   template.entries.forEach(entry => {
     if (entry.customText) {
+      // Store all cell properties from the template
       cellContents.set(entry.cellKey, {
         text: entry.customText,
-        isVertical: false,
-        alignment: 'center',
+        // Store cell formatting properties if available, or use defaults
+        isVertical: entry.isVertical !== undefined ? entry.isVertical : false,
+        alignment: entry.alignment || 'center',
         className: entry.class?.id
       });
     }
   });
   
+  // Restore merged cells if available
+  if (template.mergedCellsData) {
+    Object.entries(template.mergedCellsData).forEach(([key, value]) => {
+      mergedCells.set(key, value);
+    });
+  }
+  
+  // Restore hidden cells if available
+  if (template.hiddenCellsArray) {
+    template.hiddenCellsArray.forEach(cellKey => {
+      hiddenCells.add(cellKey);
+    });
+  }
+  
   return {
     cellContents,
     columnCount: template.columnCount,
     columnDurations: { ...template.columnDurations },
-    defaultSlotDuration: template.defaultSlotDuration
+    defaultSlotDuration: template.defaultSlotDuration,
+    mergedCells,
+    hiddenCells
   };
 };
 

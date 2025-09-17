@@ -40,7 +40,10 @@ export const extractTimetableData = (
         col,
         day: dayLabels[row],
         timeSlot: timeLabels[col],
-        customText: cellContent?.text
+        customText: cellContent?.text,
+        // Store cell formatting properties
+        isVertical: cellContent?.isVertical,
+        alignment: cellContent?.alignment
       };
       
       entries.push(entry);
